@@ -12,22 +12,37 @@ public class Alarm : MonoBehaviour
     {
         if (collision.TryGetComponent<Thief>(out Thief thief))
         {
-            SoundVolume(_sound, _maxVolume, _speed);
             _sound.Play();
         }
     }
 
+    private void OnTriggerStay(Collider collision)
+    {
+        if (collision.TryGetComponent<Thief>(out Thief thief))
+        {
+            SoundVolume(_sound, _maxVolume, _speed);
+        }
+    }
+    
     private void OnTriggerExit(Collider collision)
     {
         if (collision.TryGetComponent<Thief>(out Thief thief))
         {
-            SoundVolume(_sound, -_maxVolume, _speed);
-            _sound.Stop();
+            StartCoroutine(AttenuationSoundVolume(_sound, _maxVolume, _speed));
+        }
+    }
+
+    private IEnumerator AttenuationSoundVolume(AudioSource sound, float maxVolume, float speed)
+    {
+        while (true)
+        {
+            _sound.volume = Mathf.MoveTowards(sound.volume, -maxVolume, speed * Time.deltaTime);
+            yield return null;
         }
     }
 
     public void SoundVolume(AudioSource sound, float maxVolume, float speed)
     {
-        sound.volume = Mathf.MoveTowards(sound.volume, maxVolume, speed * Time.fixedDeltaTime);
+        sound.volume = Mathf.MoveTowards(sound.volume, maxVolume, speed * Time.deltaTime);
     }
 }
