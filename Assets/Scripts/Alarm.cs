@@ -8,19 +8,22 @@ public class Alarm : MonoBehaviour
     [SerializeField] private float _maxVolume;
     [SerializeField] private float _speed;
 
+    private IEnumerator _coroutineVolumeIncrease;
+    private IEnumerator _coroutineVolumeReduction;
+
+    private void Start()
+    {
+        _coroutineVolumeIncrease = SoundVolume(_sound, _maxVolume, _speed);
+        _coroutineVolumeReduction = SoundVolume(_sound, -_maxVolume, _speed);
+    }
+
     private void OnTriggerEnter(Collider collision)
     {
         if (collision.TryGetComponent<Thief>(out Thief thief))
         {
             _sound.Play();
-        }
-    }
-
-    private void OnTriggerStay(Collider collision)
-    {
-        if (collision.TryGetComponent<Thief>(out Thief thief))
-        {
-            SoundVolume(_sound, _maxVolume, _speed);
+            StopCoroutine(_coroutineVolumeReduction);
+            StartCoroutine(_coroutineVolumeIncrease);
         }
     }
     
@@ -28,21 +31,17 @@ public class Alarm : MonoBehaviour
     {
         if (collision.TryGetComponent<Thief>(out Thief thief))
         {
-            StartCoroutine(AttenuationSoundVolume(_sound, _maxVolume, _speed));
+            StopCoroutine(_coroutineVolumeIncrease);
+            StartCoroutine(_coroutineVolumeReduction);
         }
     }
 
-    private IEnumerator AttenuationSoundVolume(AudioSource sound, float maxVolume, float speed)
+    private IEnumerator SoundVolume(AudioSource sound, float maxVolume, float speed)
     {
         while (true)
         {
-            _sound.volume = Mathf.MoveTowards(sound.volume, -maxVolume, speed * Time.deltaTime);
+            _sound.volume = Mathf.MoveTowards(sound.volume, maxVolume, speed * Time.deltaTime);
             yield return null;
         }
-    }
-
-    public void SoundVolume(AudioSource sound, float maxVolume, float speed)
-    {
-        sound.volume = Mathf.MoveTowards(sound.volume, maxVolume, speed * Time.deltaTime);
     }
 }
